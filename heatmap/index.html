@@ -16,7 +16,7 @@
 
 <div class="heatmap"></div>
 
-<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="//d3js.org/d3.v5.min.js"></script>
 
 <script>
   var itemSize = 22,
@@ -26,14 +26,14 @@
   var width = 750 - margin.right - margin.left,
       height = 300 - margin.top - margin.bottom;
 
-  var formatDate = d3.time.format("%Y-%m-%d");
+  var formatDate = d3.timeFormat("%Y-%m-%d");
 
-  d3.csv('data.csv', function ( response ) {
+  d3.csv('data.csv').then(function ( response ) {
 
     var data = response.map(function( item ) {
         var newItem = {};
-        newItem.country = item.x;
-        newItem.product = item.y;
+        newItem.activity = item.activity;
+        newItem.date = item.date;
         newItem.value = item.value;
 
         return newItem;
@@ -55,32 +55,26 @@
         'Nov 7'
     ]
 
-    var x_elements = d3.set(dates.concat(data.map(function( item ) { return item.product.trim(); }))).values();
-    var y_elements = d3.set(data.map(function( item ) { return item.country; } )).values();
+    var x_elements = d3.set(dates.concat(data.map(function( item ) { return item.date.trim(); }))).values();
+    var y_elements = d3.set(data.map(function( item ) { return item.activity; } )).values();
 
-    var xScale = d3.scale.ordinal()
-        .domain(x_elements)
-        .rangeBands([0, x_elements.length * itemSize]);
+    var xScale = d3.scaleBand(x_elements,  [0, x_elements.length * itemSize]);
 
-    var xAxis = d3.svg.axis()
+    var xAxis = d3.axisTop()
         .scale(xScale)
         .tickFormat(function (d) {
             return d;
-        })
-        .orient("top");
+        });
 
-    var yScale = d3.scale.ordinal()
-        .domain(y_elements)
-        .rangeBands([0, y_elements.length * itemSize]);
+    var yScale = d3.scaleBand(y_elements, [0, y_elements.length * itemSize]);
 
-    var yAxis = d3.svg.axis()
+    var yAxis = d3.axisLeft()
         .scale(yScale)
         .tickFormat(function (d) {
             return d;
-        })
-        .orient("left");
+        });
 
-    var colorScale = d3.scale.threshold()
+    var colorScale = d3.scaleThreshold()
         .domain([0.85, 1])
         .range(["#2980B9", "#E67E22", "#27AE60", "#27AE60"]);
 
@@ -97,8 +91,8 @@
         .attr('class', 'cell')
         .attr('width', cellSize)
         .attr('height', cellSize)
-        .attr('y', function(d) { return yScale(d.country); })
-        .attr('x', function(d) { return xScale(d.product); })
+        .attr('y', function(d) { return yScale(d.activity); })
+        .attr('x', function(d) { return xScale(d.date); })
         .attr('fill', function(d) { return colorScale(d.value); });
 
     svg.append("g")

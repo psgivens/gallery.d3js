@@ -1,13 +1,13 @@
-x,y,value
-Training Run,Oct 27, 2.3129545439964723
-Training Run,Oct 29, 0.3129545439964723
-Training Run,Oct 30, 6.3129545439964723
-Training Run,Oct 31, 
-Long Run,Nov 1, 1
-Pool Swim,Oct 26, 1
-Training Bike Ride,Oct 28, 1
-Meditate,Oct 30, 0.1
-Meditate,Oct 31, 0.1
-Meditate, Nov 2, 0.1
-Meditate,Nov 3, 0.1
-Meditate,Nov 5, 0.1
+type,activity,date,value
+x,Training Run,Oct 27, 2.3129545439964723
+x,Training Run,Oct 29, 0.3129545439964723
+x,Training Run,Oct 30, 6.3129545439964723
+x,Training Run,Oct 31, 
+x,Long Run,Nov 1, 1
+x,Pool Swim,Oct 26, 1
+x,Training Bike Ride,Oct 28, 1
+x,Meditate,Oct 30, 0.1
+x,Meditate,Oct 31, 0.1
+x,Meditate, Nov 2, 0.1
+x,Meditate,Nov 3, 0.1
+x,Meditate,Nov 5, 0.1
