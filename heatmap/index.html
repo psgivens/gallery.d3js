@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-  .axis path,
-  .axis line {
-    fill: none;
-    stroke: black;
-    shape-rendering: crispEdges;
-  }
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
 
-  .axis text {
-      font-family: sans-serif;
-      font-size: 11px;
-  }
+    .axis text {
+        font-family: sans-serif;
+        font-size: 11px;
+    }
 </style>
 
 <div class="heatmap"></div>
@@ -19,98 +19,363 @@
 <script src="//d3js.org/d3.v5.min.js"></script>
 
 <script>
-  var itemSize = 22,
-      cellSize = itemSize - 1,
-      margin = {top: 120, right: 20, bottom: 20, left: 110};
-      
-  var width = 750 - margin.right - margin.left,
-      height = 300 - margin.top - margin.bottom;
 
-  var formatDate = d3.timeFormat("%Y-%m-%d");
+    // TODO: Review these to guide you
+    // https://observablehq.com/@d3/calendar-view
+    // https://bl.ocks.org/mbostock/1256572
 
-  d3.csv('data.csv').then(function ( response ) {
+    const itemSize = 22,
+          cellSize = itemSize - 4,
+          margin = { top: 120, right: 20, bottom: 20, left: 110 },
+          topSpacer = 10,
+          categoryBuffer = 20;
 
-    var data = response.map(function( item ) {
-        var newItem = {};
-        newItem.activity = item.activity;
-        newItem.date = item.date;
-        newItem.value = item.value;
 
-        return newItem;
-    })
+    const width = 750 - margin.right - margin.left,
+          height = 800 - margin.top - margin.bottom;
 
-    var dates = [
-        'Oct 26',
-        'Oct 27',
-        'Oct 28',
-        'Oct 29',
-        'Oct 30',
-        'Oct 31',
-        'Nov 1',
-        'Nov 2',
-        'Nov 3',
-        'Nov 4',
-        'Nov 5',
-        'Nov 6',
-        'Nov 7'
-    ]
+    const formatDate = d3.timeFormat("%Y-%m-%d");
 
-    var x_elements = d3.set(dates.concat(data.map(function( item ) { return item.date.trim(); }))).values();
-    var y_elements = d3.set(data.map(function( item ) { return item.activity; } )).values();
+    var n_elements = {};
 
-    var xScale = d3.scaleBand(x_elements,  [0, x_elements.length * itemSize]);
+    const toDate = dt => new Date(Date.parse(dt))
 
-    var xAxis = d3.axisTop()
-        .scale(xScale)
-        .tickFormat(function (d) {
-            return d;
+    const munge_data = d => {
+        console.log ("munge_data");
+        console.log (d);
+        const n = d3
+            .nest()
+            .key(i => i.type)
+            .entries (d);
+        console.log (n);
+
+        var top = topSpacer;
+
+        n.forEach (t => {
+            console.log (`key ${t.key}`);
+
+            const v = t
+                .values
+                .map (i => Object.assign (i, {row: 'data', date: toDate(i.date)}));
+
+            const activities = [t.key].concat(d3.set(v.map(item => item.activity)).values());
+            console.log (activities);
+
+            const count = activities.length;
+            const typeHeight = count * itemSize;
+            t.activities = activities;
+            t.top = top;
+            t.height = typeHeight;
+
+            top += typeHeight + categoryBuffer;
+
+            console.log (t);
+
+            const aggregates = d3
+                .nest ()
+                .key (i => i.date)
+                .rollup (i1 => d3.sum(i1, i2 => i2.value))
+                .entries (v)
+                .map (i => ({
+                    activity: t.key,
+                    date: i.key,
+                    value: i.value,
+                    row: "title"
+                }));
+
+            t.values = aggregates.concat (t.values);
+
+            t.values.forEach (t1 => {
+                console.log (`activity: ${t1.activity}, date: ${(new Date(t1.date)).toDateString ()}, value: ${t1.value}, row: ${t1.row}`);
+            });
         });
 
-    var yScale = d3.scaleBand(y_elements, [0, y_elements.length * itemSize]);
+        return n;
+    };
 
-    var yAxis = d3.axisLeft()
-        .scale(yScale)
-        .tickFormat(function (d) {
-            return d;
+    d3.csv('data.csv').then(function (response) {
+
+        // *** Data received ***
+        /* 
+            [{ 
+                type: <string>, 
+                activity: <string>, 
+                date: <string>, 
+                value: <number>
+            }]
+        */
+
+
+        // *** Desired ***
+        /*
+            [{
+                // Potentially for a label
+                key: <string>
+
+                // Used for position, sizing, and axis
+                height: <number>
+                top: <number>
+
+                values: [
+                    // First: Aggregate row data (multiple entries)
+                    // Used as summation row at top
+                    { 
+                        activity: <same as key>, 
+                        date: <string>, 
+                        value: <number>,
+                        type: "title"
+                    },
+
+                    // Then: Activity row data (multiple entries)
+                    { 
+                        activity: <string>, 
+                        date: <string>, 
+                        value: <number>,
+                        type: "data"
+                    }
+                ]
+            }]
+        */ 
+
+        const m = munge_data (response);
+        console.log (m);
+        console.log (' =========== munge complete ====================')
+
+        // *** Rough desired heatmap ****
+
+        /*        1  2  3  4  5  6  7  ^
+        ================================
+        fit       X     X  X  X     X
+        ================================
+        run       X        X        X
+        --------------------------------
+        swim            X     X
+        --------------------------------
+
+        ================================
+        mental    X     X  X  X     X  ^
+        ================================
+        meditate  X        X        X
+        --------------------------------
+        improv          X     X 
+        --------------------------------
+
+        */
+
+        var svg = d3.select('.heatmap')
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+        var dates = [
+            '10/26/2019',
+            '10/27/2019',
+            '10/28/2019',
+            '10/29/2019',
+            '10/30/2019',
+            '10/31/2019',
+            '11/1/2019',
+            '11/2/2019',
+            '11/3/2019',
+            '11/4/2019',
+            '11/5/2019',
+            '11/6/2019',
+            '11/7/2019'
+        ].map (toDate);
+
+        var x_elements = d3.set(dates.concat(response.map(item => item.date))).values();
+        var xScale = d3.scaleBand(x_elements, [0, x_elements.length * itemSize]);
+        var xAxis = d3.axisTop()
+            .scale(xScale)
+            .tickFormat(d => (new Date(d)).toDateString ());
+
+        svg.append("g")
+            .attr("class", "x axis")
+            .call(xAxis)
+            .selectAll('text')
+            .attr('font-weight', 'normal')
+            .style("text-anchor", "start")
+            .attr("dx", ".8em")
+            .attr("dy", ".5em")
+            .attr("transform", function (d) {
+                return "rotate(-65)";
+            });
+        console.log (" ====================== x axis complete ============================ ")
+
+        var colorScale = d3.scaleThreshold()
+            .domain([0.85, 1])
+            .range(["#2980B9", "#E67E22", "#27AE60", "#27AE60"]);
+
+        console.log (" ====================== colorScale created ============================ ")
+
+
+
+
+        const categories = svg.selectAll('g.categories')
+            .data(m)
+            .enter()            
+            .append('g')
+            .attr ('class', 'categories')
+            // .attr('transform', d => `translate(50,50)`)
+
+        // const catrects = categories
+        //     .append('rect')
+        //     .attr('transform', d => `translate(0,${d.top})`)
+        //     // .attr('y', d => d.top)
+        //     .attr('x', 0)
+        //     .attr('height', 30)
+        //     .attr('width', 30)
+        //     .attr('color', '#27AE60');
+
+
+        console.log (categories)
+        console.log (" ====================== categories created ============================ ")
+
+        const check = x => {
+            console.log ("== .x ==")
+            console.log (x)
+            x.data (d => {
+                console.log (d)
+                return d;
+            })
+            console.log ("== x. ==")
+        }
+
+        // const catchecks = categories
+        //     .selectAll('g.catchecks')
+        //     .data (d => d)
+        //     .enter ()
+        //     .append ('g')
+        //     .attr("class", "catchecks")
+        //     .append ('rect')
+        //     .attr('height', 30)
+        //     .attr('width', 30)
+        //     .call (check)
+        //     ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        categories.each (function (data, j) {
+
+            console.log ('==drawcategroy==')
+            console.log (data);
+
+            const y_elements = data.activities;
+            console.log ("y_elements")
+            console.log (y_elements)
+    
+            const yScale = d3.scaleBand(y_elements, [data.top, data.top + data.height]);// y_elements.length * itemSize]);
+
+
+            const yScale1 = d3.scaleBand(y_elements, [0, data.height]);// y_elements.length * itemSize]);
+
+            const g = d3.select(this)
+                .append ('g')
+                .attr("class", "cataxis")
+                .attr("transform", `translate(0, ${data.top}px)`)
+                .attr("y", data.top);
+
+            // const r = g
+            //     .append ('rect')
+            //     .attr('x', 124)
+            //     .attr('y', data.top)
+            //     .attr('height', 30)
+            //     .attr('width', 30)
+            //     .attr('color', '#27AE60');
+
+            const formatTick = (d) => d;
+
+
+            // TODO: Adjust yAxis to represent grouping, instead of global.
+            // Modified from: https://observablehq.com/@d3/styled-axes
+            const yAxis = svg => svg
+                .attr("transform", `translate(${0-margin.left},0)`)
+                .call(d3.axisRight(yScale)
+                    .tickSize(width - margin.left - margin.right)
+                    .tickFormat(formatTick))
+                .call(g => g.select(".domain")
+                    .remove())
+                .call(g => g.selectAll(".tick:not(:first-of-type) line")
+                    .attr("stroke-opacity", 0.5)
+                    .attr("stroke-dasharray", "2,2"))
+                .call(g => g.selectAll(".tick text")
+                    .attr("x", 4)
+                    .attr("dy", -4))
+
+            const gsa = g
+                .append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+            var cells = g.selectAll('rect')
+                .data(d => d.values)
+                .enter().append('g').append('rect')
+                .attr('class', 'cell')
+                .attr('width', cellSize)
+                .attr('height', cellSize)
+                .attr('transform', `translate(0,${data.top - topSpacer})`)
+                .attr('y', function (d) { return yScale1(d.activity) +2 ; })
+                .attr('x', function (d) { return xScale(d.date) +3; })
+                .attr('fill', function (d) { return colorScale(d.value); });
+
+
         });
 
-    var colorScale = d3.scaleThreshold()
-        .domain([0.85, 1])
-        .range(["#2980B9", "#E67E22", "#27AE60", "#27AE60"]);
+        
 
-    var svg = d3.select('.heatmap')
-        .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        
 
-    var cells = svg.selectAll('rect')
-        .data(data)
-        .enter().append('g').append('rect')
-        .attr('class', 'cell')
-        .attr('width', cellSize)
-        .attr('height', cellSize)
-        .attr('y', function(d) { return yScale(d.activity); })
-        .attr('x', function(d) { return xScale(d.date); })
-        .attr('fill', function(d) { return colorScale(d.value); });
 
-    svg.append("g")
-        .attr("class", "y axis")
-        .call(yAxis)
-        .selectAll('text')
-        .attr('font-weight', 'normal');
+        return {};
 
-    svg.append("g")
-        .attr("class", "x axis")
-        .call(xAxis)
-        .selectAll('text')
-        .attr('font-weight', 'normal')
-        .style("text-anchor", "start")
-        .attr("dx", ".8em")
-        .attr("dy", ".5em")
-        .attr("transform", function (d) {
-            return "rotate(-65)";
-        });
-  });
+
+
+
+
+        // var gsc = gs.selectAll('g')
+        //     .data(g => { 
+        //         console.log (g.values)
+        //         return g.values })
+        //     .enter()
+        //     .append('rect')
+        //     .attr('class', 'cell')
+        //     .attr('width', cellSize)
+        //     .attr('height', cellSize)
+        //     .attr('y', function (d) { return yScale(d.activity); })
+        //     .attr('x', function (d) { return xScale(d.date); })
+        //     .attr('fill', function (d) { return colorScale(d.value); });
+
+
+        // var cells = svg.selectAll('rect')
+        //     .data(data)
+        //     .enter().append('g').append('rect')
+        //     .attr('class', 'cell')
+        //     .attr('width', cellSize)
+        //     .attr('height', cellSize)
+        //     .attr('y', function (d) { return yScale(d.activity); })
+        //     .attr('x', function (d) { return xScale(d.date); })
+        //     .attr('fill', function (d) { return colorScale(d.value); });
+
+
+    });
 </script>

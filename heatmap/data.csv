@@ -1,13 +1,13 @@
 type,activity,date,value
-x,Training Run,Oct 27, 2.3129545439964723
-x,Training Run,Oct 29, 0.3129545439964723
-x,Training Run,Oct 30, 6.3129545439964723
-x,Training Run,Oct 31, 
-x,Long Run,Nov 1, 1
-x,Pool Swim,Oct 26, 1
-x,Training Bike Ride,Oct 28, 1
-x,Meditate,Oct 30, 0.1
-x,Meditate,Oct 31, 0.1
-x,Meditate, Nov 2, 0.1
-x,Meditate,Nov 3, 0.1
-x,Meditate,Nov 5, 0.1
+Fitness,Training Run,10/27/2019, 2.3129545439964723
+Fitness,Training Run,10/29/2019, 0.3129545439964723
+Fitness,Training Run,10/30/2019, 6.3129545439964723
+Fitness,Training Run,10/31/2019, 
+Fitness,Long Run,11/1/2019, 1
+Fitness,Pool Swim,10/26/2019, 1
+Fitness,Training Bike Ride,10/28/2019, 1
+Mental,Meditate,10/30/2019, 0.1
+Mental,Meditate,10/31/2019, 0.1
+Mental,Meditate, 11/2/2019, 0.1
+Mental,Meditate,11/3/2019, 0.1
+Mental,Meditate,11/5/2019, 0.1

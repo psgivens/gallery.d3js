@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+
+    .axis text {
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+</style>
+
+<div class="heatmap"></div>
+
+<script src="//d3js.org/d3.v5.min.js"></script>
+
+<script>
+    /* **** Sizing **** */
+    const itemSize = 22,
+          cellSize = itemSize - 1,
+          margin = { top: 120, right: 20, bottom: 20, left: 110 };
+
+    const width = 750 - margin.right - margin.left,
+          height = 300 - margin.top - margin.bottom;
+    
+    const formatDate = d3.timeFormat("%Y-%m-%d");
+
+    const n_elements = {};
+
+    d3.csv('data.csv').then(function (response) {
+
+
+        /* ****************************
+         * Munge
+        **************************** */
+        var data = response.map(function (item) {
+            var newItem = {};
+            newItem.activity = item.activity;
+            newItem.date = item.date;
+            newItem.value = item.value;
+
+            return newItem;
+        })
+
+        var dates = [
+            'Oct 26',
+            'Oct 27',
+            'Oct 28',
+            'Oct 29',
+            'Oct 30',
+            'Oct 31',
+            'Nov 1',
+            'Nov 2',
+            'Nov 3',
+            'Nov 4',
+            'Nov 5',
+            'Nov 6',
+            'Nov 7'
+        ]
+
+        var x_elements = d3.set(dates.concat(data.map(function (item) { return item.date.trim(); }))).values();
+        var y_elements = d3.set(data.map(function (item) { return item.activity; })).values();
+
+        // n_elements = d3.nest().key(r => r.type).entries(response);
+
+        var xScale = d3.scaleBand(x_elements, [0, x_elements.length * itemSize]);
+
+        var xAxis = d3.axisTop()
+            .scale(xScale)
+            .tickFormat(function (d) {
+                return d;
+            });
+
+        var yScale = d3.scaleBand(y_elements, [0, y_elements.length * itemSize]);
+
+
+        var formatTick = (d) => d;
+
+        // var yAxis = d3.axisLeft()
+        //     .scale(yScale)
+        //     .tickFormat(function (d) {
+        //         return d;
+        //     });
+
+        // d3.axisRight(yScale)
+        //         .tickSize(width - margin.left - margin.right)
+        //         .tickFormat(formatTick) 
+
+        // Modified from: https://observablehq.com/@d3/styled-axes
+        const yAxis = svg => svg
+            .attr("transform", `translate(${0-margin.left},10)`)
+            .call(d3.axisRight(yScale)
+                .tickSize(width - margin.left - margin.right)
+                .tickFormat(formatTick) )
+            .call(g => g.select(".domain")
+                .remove())
+            .call(g => g.selectAll(".tick:not(:first-of-type) line")
+                .attr("stroke-opacity", 0.5)
+                .attr("stroke-dasharray", "2,2"))
+            .call(g => g.selectAll(".tick text")
+                .attr("x", 4)
+                .attr("dy", -4))
+
+
+        var colorScale = d3.scaleThreshold()
+            .domain([0.85, 1])
+            .range(["#2980B9", "#E67E22", "#27AE60", "#27AE60"]);
+
+        var svg = d3.select('.heatmap')
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var cells = svg.selectAll('rect')
+            .data(data)
+            .enter().append('g').append('rect')
+            .attr('class', 'cell')
+            .attr('width', cellSize)
+            .attr('height', cellSize)
+            .attr('y', function (d) { return yScale(d.activity); })
+            .attr('x', function (d) { return xScale(d.date); })
+            .attr('fill', function (d) { return colorScale(d.value); });
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+            .selectAll('text')
+            .attr('font-weight', 'normal');
+
+        svg.append("g")
+            .attr("class", "x axis")
+            .call(xAxis)
+            .selectAll('text')
+            .attr('font-weight', 'normal')
+            .style("text-anchor", "start")
+            .attr("dx", ".8em")
+            .attr("dy", ".5em")
+            .attr("transform", function (d) {
+                return "rotate(-65)";
+            });
+    });
+</script>
