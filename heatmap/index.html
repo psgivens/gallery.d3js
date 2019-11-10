@@ -25,9 +25,9 @@
     // https://bl.ocks.org/mbostock/1256572
 
     const itemSize = 22,
-          cellSize = itemSize - 4,
           margin = { top: 120, right: 20, bottom: 20, left: 110 },
-          topSpacer = 10,
+          topSpacer = 12,
+          cellPadding = 3,
           categoryBuffer = 20;
 
 
@@ -49,7 +49,7 @@
             .entries (d);
         console.log (n);
 
-        var top = topSpacer;
+        var top = 0;
 
         n.forEach (t => {
             console.log (`key ${t.key}`);
@@ -138,8 +138,7 @@
         */ 
 
         const m = munge_data (response);
-        console.log (m);
-        console.log (' =========== munge complete ====================')
+        // console.log (m);
 
         // *** Rough desired heatmap ****
 
@@ -186,11 +185,16 @@
             '11/7/2019'
         ].map (toDate);
 
-        var x_elements = d3.set(dates.concat(response.map(item => item.date))).values();
-        var xScale = d3.scaleBand(x_elements, [0, x_elements.length * itemSize]);
-        var xAxis = d3.axisTop()
-            .scale(xScale)
-            .tickFormat(d => (new Date(d)).toDateString ());
+        // **************
+        // Create the x-scale and X-Axis
+        // ****************
+        const x_elements = d3.set(dates.concat(response.map(item => item.date))).values();
+        const scaleWidth = x_elements.length * itemSize;
+        const xScale = d3.scaleBand(x_elements, [0, scaleWidth]);
+        const xAxis = d3
+                .axisTop()
+                .scale(xScale)
+                .tickFormat(d => (new Date(d)).toDateString ());
 
         svg.append("g")
             .attr("class", "x axis")
@@ -203,115 +207,46 @@
             .attr("transform", function (d) {
                 return "rotate(-65)";
             });
-        console.log (" ====================== x axis complete ============================ ")
 
+        // **************
+        // Create the Color scale
+        // ****************
         var colorScale = d3.scaleThreshold()
             .domain([0.85, 1])
             .range(["#2980B9", "#E67E22", "#27AE60", "#27AE60"]);
 
-        console.log (" ====================== colorScale created ============================ ")
 
-
-
-
+        // **************
+        // Create each category
+        // ****************
         const categories = svg.selectAll('g.categories')
             .data(m)
             .enter()            
             .append('g')
             .attr ('class', 'categories')
-            // .attr('transform', d => `translate(50,50)`)
-
-        // const catrects = categories
-        //     .append('rect')
-        //     .attr('transform', d => `translate(0,${d.top})`)
-        //     // .attr('y', d => d.top)
-        //     .attr('x', 0)
-        //     .attr('height', 30)
-        //     .attr('width', 30)
-        //     .attr('color', '#27AE60');
-
-
-        console.log (categories)
-        console.log (" ====================== categories created ============================ ")
-
-        const check = x => {
-            console.log ("== .x ==")
-            console.log (x)
-            x.data (d => {
-                console.log (d)
-                return d;
-            })
-            console.log ("== x. ==")
-        }
-
-        // const catchecks = categories
-        //     .selectAll('g.catchecks')
-        //     .data (d => d)
-        //     .enter ()
-        //     .append ('g')
-        //     .attr("class", "catchecks")
-        //     .append ('rect')
-        //     .attr('height', 30)
-        //     .attr('width', 30)
-        //     .call (check)
-        //     ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        categories.each (function (data, j) {
-
-            console.log ('==drawcategroy==')
-            console.log (data);
-
-            const y_elements = data.activities;
-            console.log ("y_elements")
-            console.log (y_elements)
+            .each (function (data, j) 
+        {
+            const g = d3.select(this);
     
-            const yScale = d3.scaleBand(y_elements, [data.top, data.top + data.height]);// y_elements.length * itemSize]);
+            // **************
+            // Create the y-scales
+            // ****************
+            const activities = data.activities;
+            const yAxisScale = d3.scaleBand(activities, [data.top + topSpacer, data.top + topSpacer + data.height]);
+            const yRectScale = d3.scaleBand(activities, [data.top + cellPadding, data.top + cellPadding + data.height]);
 
-
-            const yScale1 = d3.scaleBand(y_elements, [0, data.height]);// y_elements.length * itemSize]);
-
-            const g = d3.select(this)
-                .append ('g')
-                .attr("class", "cataxis")
-                .attr("transform", `translate(0, ${data.top}px)`)
-                .attr("y", data.top);
-
-            // const r = g
-            //     .append ('rect')
-            //     .attr('x', 124)
-            //     .attr('y', data.top)
-            //     .attr('height', 30)
-            //     .attr('width', 30)
-            //     .attr('color', '#27AE60');
-
+            console.log(xScale)
+            // **************
+            // Create the yAxis
+            // ****************
             const formatTick = (d) => d;
-
-
-            // TODO: Adjust yAxis to represent grouping, instead of global.
             // Modified from: https://observablehq.com/@d3/styled-axes
-            const yAxis = svg => svg
+            const yAxis = g
+                .append("g")
+                .attr("class", "y axis")
                 .attr("transform", `translate(${0-margin.left},0)`)
-                .call(d3.axisRight(yScale)
-                    .tickSize(width - margin.left - margin.right)
+                .call(d3.axisRight(yAxisScale)
+                    .tickSize(margin.left + scaleWidth)
                     .tickFormat(formatTick))
                 .call(g => g.select(".domain")
                     .remove())
@@ -322,60 +257,23 @@
                     .attr("x", 4)
                     .attr("dy", -4))
 
-            const gsa = g
-                .append("g")
-                .attr("class", "y axis")
-                .call(yAxis);
-
-            var cells = g.selectAll('rect')
+            // **************
+            // Create the cells
+            // ****************
+            const cellSize = xScale.bandwidth() - 4
+            const cells = g
+                .selectAll('rect.cell')
                 .data(d => d.values)
-                .enter().append('g').append('rect')
+                .enter()
+                .append('rect')
                 .attr('class', 'cell')
                 .attr('width', cellSize)
                 .attr('height', cellSize)
-                .attr('transform', `translate(0,${data.top - topSpacer})`)
-                .attr('y', function (d) { return yScale1(d.activity) +2 ; })
-                .attr('x', function (d) { return xScale(d.date) +3; })
+                .attr('y', function (d) { return yRectScale(d.activity) ; })
+                .attr('x', function (d) { return xScale(d.date) + cellPadding; })
                 .attr('fill', function (d) { return colorScale(d.value); });
 
-
         });
-
-        
-
-        
-
-
-        return {};
-
-
-
-
-
-        // var gsc = gs.selectAll('g')
-        //     .data(g => { 
-        //         console.log (g.values)
-        //         return g.values })
-        //     .enter()
-        //     .append('rect')
-        //     .attr('class', 'cell')
-        //     .attr('width', cellSize)
-        //     .attr('height', cellSize)
-        //     .attr('y', function (d) { return yScale(d.activity); })
-        //     .attr('x', function (d) { return xScale(d.date); })
-        //     .attr('fill', function (d) { return colorScale(d.value); });
-
-
-        // var cells = svg.selectAll('rect')
-        //     .data(data)
-        //     .enter().append('g').append('rect')
-        //     .attr('class', 'cell')
-        //     .attr('width', cellSize)
-        //     .attr('height', cellSize)
-        //     .attr('y', function (d) { return yScale(d.activity); })
-        //     .attr('x', function (d) { return xScale(d.date); })
-        //     .attr('fill', function (d) { return colorScale(d.value); });
-
 
     });
 </script>
