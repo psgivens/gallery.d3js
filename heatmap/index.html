@@ -40,6 +40,30 @@
 
     const toDate = dt => new Date(Date.parse(dt))
 
+
+    const svg = d3.select('.heatmap')
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            ;
+
+    var dates = [
+        '10/26/2019',
+        '10/27/2019',
+        '10/28/2019',
+        '10/29/2019',
+        '10/30/2019',
+        '10/31/2019',
+        '11/1/2019',
+        '11/2/2019',
+        '11/3/2019',
+        '11/4/2019',
+        '11/5/2019',
+        '11/6/2019',
+        '11/7/2019'
+        ].map (toDate);
+
+
     const munge_data = d => {
         console.log ("munge_data");
         console.log (d);
@@ -161,30 +185,6 @@
 
         */
 
-        var svg = d3.select('.heatmap')
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-
-        var dates = [
-            '10/26/2019',
-            '10/27/2019',
-            '10/28/2019',
-            '10/29/2019',
-            '10/30/2019',
-            '10/31/2019',
-            '11/1/2019',
-            '11/2/2019',
-            '11/3/2019',
-            '11/4/2019',
-            '11/5/2019',
-            '11/6/2019',
-            '11/7/2019'
-        ].map (toDate);
-
         // **************
         // Create the x-scale and X-Axis
         // ****************
@@ -197,6 +197,7 @@
                 .tickFormat(d => (new Date(d)).toDateString ());
 
         svg.append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
             .attr("class", "x axis")
             .call(xAxis)
             .selectAll('text')
@@ -215,25 +216,27 @@
             .domain([0.85, 1])
             .range(["#2980B9", "#E67E22", "#27AE60", "#27AE60"]);
 
-
         // **************
         // Create each category
         // ****************
-        const categories = svg.selectAll('g.categories')
+        const categories = svg
+            .selectAll('g.category')
             .data(m)
             .enter()            
             .append('g')
-            .attr ('class', 'categories')
-            .each (function (data, j) 
+            .attr ('class', 'category')
+            
+        categories.each (function (data, j) 
         {
-            const g = d3.select(this);
+            const categoryG = d3.select(this);
+            categoryG.attr("transform", `translate(0,${margin.top + data.top})`)
     
             // **************
             // Create the y-scales
             // ****************
             const activities = data.activities;
-            const yAxisScale = d3.scaleBand(activities, [data.top + topSpacer, data.top + topSpacer + data.height]);
-            const yRectScale = d3.scaleBand(activities, [data.top + cellPadding, data.top + cellPadding + data.height]);
+            const yAxisScale = d3.scaleBand(activities, [topSpacer, topSpacer + data.height]);
+            const yRectScale = d3.scaleBand(activities, [cellPadding, cellPadding + data.height]);
 
             console.log(xScale)
             // **************
@@ -241,10 +244,10 @@
             // ****************
             const formatTick = (d) => d;
             // Modified from: https://observablehq.com/@d3/styled-axes
-            const yAxis = g
+            const yAxis = categoryG
                 .append("g")
                 .attr("class", "y axis")
-                .attr("transform", `translate(${0-margin.left},0)`)
+                // .attr("transform", `translate(0,${data.top})`)
                 .call(d3.axisRight(yAxisScale)
                     .tickSize(margin.left + scaleWidth)
                     .tickFormat(formatTick))
@@ -253,26 +256,38 @@
                 .call(g => g.selectAll(".tick:not(:first-of-type) line")
                     .attr("stroke-opacity", 0.5)
                     .attr("stroke-dasharray", "2,2"))
+                .call(g => g.selectAll(".tick:first-of-type line")
+                    .attr("stroke-width", 2))
                 .call(g => g.selectAll(".tick text")
                     .attr("x", 4)
                     .attr("dy", -4))
+
+            yAxis.append("line")
+                .style("stroke", "black")
+                .attr("stroke-width", 2)
+                .attr("x1", 0)
+                .attr("x2", margin.left + scaleWidth)
+                .attr("y1", 0)
+                .attr("y2", 0)
+                ;
 
             // **************
             // Create the cells
             // ****************
             const cellSize = xScale.bandwidth() - 4
-            const cells = g
+            const cells = categoryG
+                .append('g')
+                .attr("transform", `translate(${margin.left},0)`)
                 .selectAll('rect.cell')
                 .data(d => d.values)
                 .enter()
                 .append('rect')
                 .attr('class', 'cell')
                 .attr('width', cellSize)
-                .attr('height', cellSize)
+                .attr('height', cellSize)                
                 .attr('y', function (d) { return yRectScale(d.activity) ; })
                 .attr('x', function (d) { return xScale(d.date) + cellPadding; })
                 .attr('fill', function (d) { return colorScale(d.value); });
-
         });
 
     });
