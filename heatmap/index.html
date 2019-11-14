@@ -247,7 +247,6 @@
             const yAxis = categoryG
                 .append("g")
                 .attr("class", "y axis")
-                // .attr("transform", `translate(0,${data.top})`)
                 .call(d3.axisRight(yAxisScale)
                     .tickSize(margin.left + scaleWidth)
                     .tickFormat(formatTick))
