@@ -14,17 +14,40 @@ body {
   shape-rendering: crispEdges;
 }
 
-.bar {
+.bar1 {
   fill: orange;
+  stroke: black;
+  stroke-width: 1px;
 }
 
-.bar:hover {
+.bar1:hover, .bar2:hover, .bar3:hover {
   fill: orangered ;
+  stroke: black;
+  stroke-width: 1px;
 }
 
-.x.axis path {
-  display: none;
+
+.bar2 {
+  fill: green;
+  stroke: black;
+  stroke-width: 1px;
 }
+
+.bar3 {
+  fill: greenyellow;
+  stroke: black;
+  stroke-width: 1px;
+}
+
+
+
+
+/* .x.axis path {
+  display: none;
+} */
+
+
+
 
 /* .d3-tip {
   line-height: 1;
@@ -65,7 +88,9 @@ var margin = {top: 40, right: 20, bottom: 30, left: 40},
 
 var formatPercent = d3.format(".0%");
 
-var x = d3.scaleBand([0, width]);
+var x = d3.scaleBand([0, width])
+  .paddingInner(0.2)
+  .paddingOuter(0.1);
 
 var y = d3.scaleLinear()
     .range([height, 0]);
@@ -75,6 +100,7 @@ var xAxis = d3.axisBottom()
 
 var yAxis = d3.axisLeft()
     .scale(y)
+    // .tickSize(900)//width - margin.left - margin.right)
     .tickFormat(formatPercent);
 
 // var tip = d3.tip()
@@ -92,16 +118,18 @@ var svg = d3.select("body").append("svg")
 
 // svg.call(tip);
 
-d3.tsv("./data.tsv", function(d) { return d }).then (function(data) {
+d3.tsv("./data.tsv", type, function(d) { return d }).then (function(data) {
 
     for (var i = 0; i < data.length; i++) {
         console.log(data[i].letter);
-        console.log(data[i].frequency);
+        console.log(data[i].first);
+        console.log(data[i].second);
+        console.log(data[i].third);
     }
 
 
   x.domain(data.map(function(d) { return d.letter; }));
-  y.domain([0, d3.max(data, function(d) { return d.frequency; })]);
+  y.domain([0, d3.max(data, function(d) { return parseFloat(d.first) + parseFloat(d.second) + parseFloat(d.third); })]);
 
   svg.append("g")
       .attr("class", "x axis")
@@ -111,28 +139,66 @@ d3.tsv("./data.tsv", function(d) { return d }).then (function(data) {
   svg.append("g")
       .attr("class", "y axis")
       .call(yAxis)
+    //   .call(g => g.select(".domain")
+    //     .remove())
+    // .call(g => g.selectAll(".tick:not(:first-of-type) line")
+    //     .attr("stroke-opacity", 0.5)
+    //     .attr("stroke-dasharray", "2,2"))
+    // .call(g => g.selectAll(".tick text")
+    //     .attr("x", 4)
+    //     .attr("dy", -4))
     .append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 6)
       .attr("dy", ".71em")
       .style("text-anchor", "end")
-      .text("Frequency");
+      .text("first");
 
-  svg.selectAll(".bar")
+  svg.selectAll(".bar1")
       .data(data)
     .enter().append("rect")
-      .attr("class", "bar")
+      .attr("class", "bar1")
       .attr("x", function(d) { return x(d.letter); })
       .attr("width", x.bandwidth())
-      .attr("y", function(d) { return y(d.frequency); })
-      .attr("height", function(d) { return height - y(d.frequency); })
+      .attr("y", function(d) { return y(d.first); })
+      .attr("height", function(d) { return height - y(d.first); })
     //   .on('mouseover', tip.show)
     //   .on('mouseout', tip.hide)
+
+    svg.selectAll(".bar2")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "bar2")
+      .attr("x", function(d) { return x(d.letter); })
+      .attr("width", x.bandwidth())
+      .attr("y", function(d) { return y((+d.second) + (+d.first)); })
+      .attr("height", function(d) { return height - y(d.second); })
+    //   .on('mouseover', tip.show)
+    //   .on('mouseout', tip.hide)
+
+    svg.selectAll(".bar3")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "bar3")
+      .attr("x", function(d) { return x(d.letter); })
+      .attr("width", x.bandwidth())
+      .attr("y", function(d) { return y((+d.second) + (+d.first) + (+d.third)); })
+      .attr("height", function(d) { return height - y(d.third); })
+    //   .on('mouseover', tip.show)
+    //   .on('mouseout', tip.hide)
+
+
+
+
+
+
 
 });
 
 function type(d) {
-  d.frequency = +d.frequency;
+  d.first = +d.first;
+  d.second = +d.second;
+  d.third = +d.third;
   return d;
 }
 
