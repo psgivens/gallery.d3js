@@ -1,0 +1,112 @@
+<!-- Code from d3-graph-gallery.com -->
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 30, left: 30},
+    width = 460 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Parse the Data
+d3.json("data_cleveland.json", function(data) {
+
+  /******************************************
+   * Munging
+   * ****************************************/
+  let temp_value = -1;
+  const data1 = data.map(d => ({
+      group: d.group,
+      lines: d.values.reverse().map((v,i) => {
+        const p = temp_value;
+        temp_value = v.value
+        return {
+          previous: (i === d.values.length - 1) ? 0 : p,
+          isLine: (i !== d.values.length - 1),
+          red: v.value < 2.0 ? true : false,
+          value: v.value
+        }
+      }).filter(l => l.isLine),
+      values: d.values.reverse().map((v,i) => {
+        const p = temp_value;
+        temp_value = v.value
+        return {
+          previous: (i === d.values.length - 1) ? 0 : p,
+          red: v.value < 2.0 ? true : false,
+          value: v.value
+        }
+      })
+  }))
+
+
+  /******************************************
+   * Drawing 
+   * ****************************************/
+
+  // Add X axis
+  var x = d3.scaleLinear()
+    .domain([-1, 6])
+    .range([ 0, width]);
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x))
+
+  // Y axis
+  var y = d3.scaleBand()
+    .range([ 0, height ])
+    .domain(data1.map(function(d) { return d.group; }))
+    .padding(1);
+  svg.append("g")
+    .call(d3.axisLeft(y))
+
+  // Lines
+  svg.selectAll("myline")
+    .data(data1)
+    .enter()
+    .append("line")
+      .attr("x1", function(d) { return x(d.values[0].value); })
+      .attr("x2", function(d) { return x(d.values[1].value); })
+      .attr("y1", function(d) { return y(d.group); })
+      .attr("y2", function(d) { return y(d.group); })      
+      .attr("stroke", function(d) { return d.values[1].red ? "red" : "grey"; })
+      .attr("stroke-width", "1px")
+
+  // Circles of variable 1
+  svg.selectAll("mycircle")
+    .data(data1)
+    .enter()
+    .append("circle")
+      .attr("cx", function(d) { return x(d.values[0].value); })
+      .attr("cy", function(d) { return y(d.group); })
+      .attr("r", "6")
+      .style("fill", "#69b3a2")
+
+  // Circles of variable 2
+  svg.selectAll("mycircle")
+    .data(data1)
+    .enter()
+    .append("circle")
+      .attr("cx", function(d) { return x(d.values[1].value); })
+      .attr("cy", function(d) { return y(d.group); })
+      .attr("r", "6")
+      .style("fill", "#4C4082")
+})
+
+</script>
