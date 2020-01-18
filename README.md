@@ -17,6 +17,10 @@ Vertical bullets are found here
 https://www.jasondavies.com/bullet/
 
 
+### Tool Tips
+https://www.d3-graph-gallery.com/graph/interactivity_tooltip.html
+
+
 ### Box plots 
 Can be found here
 https://observablehq.com/@d3/box-plot
@@ -29,6 +33,9 @@ http://bl.ocks.org/KathyZ/c2d4694c953419e0509b
 
 
 ## People to follow
+Yan Holtz
+https://www.yan-holtz.com/
+https://www.d3-graph-gallery.com/
 
 Jason Davies
 https://www.jasondavies.com/american-forces-in-afghanistan-and-iraq/

@@ -7,13 +7,13 @@
 div.tooltip {	
     position: absolute;			
     text-align: center;			
-    width: 60px;					
-    height: 28px;					
+    width: 100px;					
+    height: 30px;					
     padding: 2px;				
     font: 12px sans-serif;		
     background: lightsteelblue;	
-    border: 0px;		
-    border-radius: 8px;			
+    border: 2px;		
+    border-radius: 5px;			
     pointer-events: none;			
 }
 </style>
@@ -29,7 +29,7 @@ div.tooltip {
 // set the dimensions and margins of the graph
 const margin = {top: 10, right: 30, bottom: 30, left: 100},
     width = 460 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+    height = 600 - margin.top - margin.bottom;
 
 // Define the div for the tooltip
 const div = d3.select("body").append("div")	
@@ -94,15 +94,70 @@ d3.json("data_cleveland.json").then(function(data) {
     .call(d3.axisLeft(y))
 
 function drawMyLine(d1) {  
-    d3.select(this)
-      .selectAll ("line")
+
+  const back1 = d3.select(this)
+      .selectAll ("line.back1")
       .data(d1.lines)
       .enter()
-      .append("line")
+      .append("line")      
       .attr("x1", function(d) { return x(d.previous); })
       .attr("x2", function(d) { return x(d.value); })
       .attr("y1", function(d) { return y(d1.group); })
       .attr("y2", function(d) { return y(d1.group); })      
+      .attr("transform", function(d) { return "translate(0, -6)" })
+      .attr("stroke", "lightgrey")
+      .attr("stroke-width", "1px")
+
+  const back2 = d3.select(this)
+      .selectAll ("line.back2")
+      .data(d1.lines)
+      .enter()
+      .append("line")      
+      .attr("x1", function(d) { return x(d.previous); })
+      .attr("x2", function(d) { return x(d.value); })
+      .attr("y1", function(d) { return y(d1.group); })
+      .attr("y2", function(d) { return y(d1.group); })      
+      .attr("transform", function(d) { return "translate(0, -2)" })
+      .attr("stroke", "lightgrey")
+      .attr("stroke-width", "1px")
+
+  const back3 = d3.select(this)
+      .selectAll ("line.back3")
+      .data(d1.lines)
+      .enter()
+      .append("line")      
+      .attr("x1", function(d) { return x(d.previous); })
+      .attr("x2", function(d) { return x(d.value); })
+      .attr("y1", function(d) { return y(d1.group); })
+      .attr("y2", function(d) { return y(d1.group); })      
+      .attr("transform", function(d) { return "translate(0, 2)" })
+      .attr("stroke", "lightgrey")
+      .attr("stroke-width", "1px")
+
+  const back4 = d3.select(this)
+      .selectAll ("line.back4")
+      .data(d1.lines)
+      .enter()
+      .append("line")      
+      .attr("x1", function(d) { return x(d.previous); })
+      .attr("x2", function(d) { return x(d.value); })
+      .attr("y1", function(d) { return y(d1.group); })
+      .attr("y2", function(d) { return y(d1.group); })      
+      .attr("transform", function(d) { return "translate(0, 6)" })
+      .attr("stroke", "lightgrey")
+      .attr("stroke-width", "1px")
+
+
+    d3.select(this)
+      .selectAll ("line.target")
+      .data(d1.lines)
+      .enter()
+      .append("line")      
+      .attr("x1", function(d) { return x(d.previous); })
+      .attr("x2", function(d) { return x(d.value); })
+      .attr("y1", function(d) { return y(d1.group); })
+      .attr("y2", function(d) { return y(d1.group); })      
+      .attr("transform", function(d) { return "translate(0," + (d.red ? -2 : 2) + ")" })
       .attr("stroke", function(d) { return d.red ? "red" : "grey"; })
       .attr("stroke-width", "1px")
   }
@@ -114,30 +169,86 @@ function drawMyLine(d1) {
     .append("g")
     .each(drawMyLine);
 
+
+
   function drawMyCircle (d1) {
+
+    function onClickItems () {
+      const item = d3.select(this)
+            .on("mouseover", function(d) {		
+                div.transition()		
+                    .duration(200)		
+                    .style("opacity", .9);		
+
+                div	.html("" + d.role  + "<br/>" + d.value)	
+                    .style("left", (d3.event.pageX) + "px")		
+                    .style("top", (d3.event.pageY - 28) + "px");	
+                })					
+            .on("mouseout", function(d) {		
+                div.transition()		
+                    .duration(500)		
+                    .style("opacity", 0);	
+            });
+    }
+
+    function callCircle1 (di) {
+      const item = d3.select(this)
+      const circle = item
+        .datum(di)
+        .append("circle")
+        .attr("class", "entity")
+        .attr("cx", function(d) { return x(d.value); })
+        .attr("cy", function(d) { return y(d1.group); })
+        .attr("r", "10")
+        .style("fill", d => d.role === "requestor" ? "#69b3a2" : "#4C4082")
+        .each(onClickItems)
+      // return circle
+    }
+
+
+    /* Not used yet. */
+    function callCircle2 (di) {
+      const item = d3.select(this)
+      const circle = item
+        .datum(di)
+        .append("circle")
+        .attr("class", "entity")
+        .attr("cx", function(d) { return x(d.value); })
+        .attr("cy", function(d) { return y(d1.group); })
+        .attr("r", "10")
+        .style("fill", d => d.role === "requestor" ? "#69b3a2" : "#4C4082")
+        .each(onClickItems)
+      // return circle
+    }
+
+
+
     d3.select(this)
-      .selectAll("circle")
+      .selectAll(".entity")
       .data(d1.values)
       .enter()
-      .append("circle")
-      .attr("cx", function(d) { return x(d.value); })
-      .attr("cy", function(d) { return y(d1.group); })
-      .attr("r", "6")
-      .style("fill", d => d.role === "requestor" ? "#69b3a2" : "#4C4082")
-      .on("mouseover", function(d) {		
-            div.transition()		
-                .duration(200)		
-                .style("opacity", .9);		
+      .each(callCircle1)
+      // .each(function (d) { return d.role ? callCircle1 : callCircle2 } )
+      // .append("circle")
+      // .attr("class", "entity")
+      // .attr("cx", function(d) { return x(d.value); })
+      // .attr("cy", function(d) { return y(d1.group); })
+      // .attr("r", "10")
+      // .style("fill", d => d.role === "requestor" ? "#69b3a2" : "#4C4082")
+      // .on("mouseover", function(d) {		
+      //       div.transition()		
+      //           .duration(200)		
+      //           .style("opacity", .9);		
 
-            div	.html("" + d.role  + "<br/>" + d.value)	
-                .style("left", (d3.event.pageX) + "px")		
-                .style("top", (d3.event.pageY - 28) + "px");	
-            })					
-        .on("mouseout", function(d) {		
-            div.transition()		
-                .duration(500)		
-                .style("opacity", 0);	
-        });
+      //       div	.html("" + d.role  + "<br/>" + d.value)	
+      //           .style("left", (d3.event.pageX) + "px")		
+      //           .style("top", (d3.event.pageY - 28) + "px");	
+      //       })					
+      //   .on("mouseout", function(d) {		
+      //       div.transition()		
+      //           .duration(500)		
+      //           .style("opacity", 0);	
+      //   });
   }
 
   // Circles of variable 1

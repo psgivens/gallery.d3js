@@ -23,12 +23,12 @@
               g = d3.select(this);
     
           // Compute the new x-scale.
-          var x1 = d3.scale.linear()
+          var x1 = d3.scaleLinear()
               .domain([0, Math.max(rangez[0], markerz[0], measurez[0])])
               .range(reverse ? [width, 0] : [0, width]);
     
           // Retrieve the old x-scale, if this is an update.
-          var x0 = this.__chart__ || d3.scale.linear()
+          var x0 = this.__chart__ || d3.scaleLinear()
               .domain([0, Infinity])
               .range(x1.range());
     
@@ -154,7 +154,7 @@
               .style("opacity", 1e-6)
               .remove();
         });
-        d3.timer.flush();
+        d3.timerFlush();
       }
     
       // left, right, top, bottom
