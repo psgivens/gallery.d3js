@@ -28,7 +28,7 @@ div.tooltip {
 <script>
 // set the dimensions and margins of the graph
 const margin = {top: 10, right: 30, bottom: 30, left: 100},
-    width = 460 - margin.left - margin.right,
+    width = 1000 - margin.left - margin.right,
     height = 600 - margin.top - margin.bottom;
 
 // Define the div for the tooltip
@@ -79,7 +79,7 @@ d3.json("data_cleveland.json").then(function(data) {
 
   // Add X axis
   const x = d3.scaleLinear()
-    .domain([-1, 6])
+    .domain([-0.2, 6])
     .range([ 0, width]);
   svg.append("g")
     .attr("transform", "translate(0," + height + ")")
@@ -87,66 +87,30 @@ d3.json("data_cleveland.json").then(function(data) {
 
   // Y axis
   const y = d3.scaleBand()
-    .range([ 0, height ])
     .domain(data1.map(function(d) { return d.group; }))
+    .range([ 0, height ])
     .padding(1);
   svg.append("g")
     .call(d3.axisLeft(y))
 
 function drawMyLine(d1) {  
-
-  const back1 = d3.select(this)
-      .selectAll ("line.back1")
-      .data(d1.lines)
-      .enter()
-      .append("line")      
-      .attr("x1", function(d) { return x(d.previous); })
-      .attr("x2", function(d) { return x(d.value); })
-      .attr("y1", function(d) { return y(d1.group); })
-      .attr("y2", function(d) { return y(d1.group); })      
-      .attr("transform", function(d) { return "translate(0, -6)" })
-      .attr("stroke", "lightgrey")
-      .attr("stroke-width", "1px")
-
-  const back2 = d3.select(this)
-      .selectAll ("line.back2")
-      .data(d1.lines)
-      .enter()
-      .append("line")      
-      .attr("x1", function(d) { return x(d.previous); })
-      .attr("x2", function(d) { return x(d.value); })
-      .attr("y1", function(d) { return y(d1.group); })
-      .attr("y2", function(d) { return y(d1.group); })      
-      .attr("transform", function(d) { return "translate(0, -2)" })
-      .attr("stroke", "lightgrey")
-      .attr("stroke-width", "1px")
-
-  const back3 = d3.select(this)
-      .selectAll ("line.back3")
-      .data(d1.lines)
-      .enter()
-      .append("line")      
-      .attr("x1", function(d) { return x(d.previous); })
-      .attr("x2", function(d) { return x(d.value); })
-      .attr("y1", function(d) { return y(d1.group); })
-      .attr("y2", function(d) { return y(d1.group); })      
-      .attr("transform", function(d) { return "translate(0, 2)" })
-      .attr("stroke", "lightgrey")
-      .attr("stroke-width", "1px")
-
-  const back4 = d3.select(this)
-      .selectAll ("line.back4")
-      .data(d1.lines)
-      .enter()
-      .append("line")      
-      .attr("x1", function(d) { return x(d.previous); })
-      .attr("x2", function(d) { return x(d.value); })
-      .attr("y1", function(d) { return y(d1.group); })
-      .attr("y2", function(d) { return y(d1.group); })      
-      .attr("transform", function(d) { return "translate(0, 6)" })
-      .attr("stroke", "lightgrey")
-      .attr("stroke-width", "1px")
-
+    const selection = d3.select(this);
+    [-6, -2, 2, 6].forEach(function(n) {
+      selection
+        .selectAll ("line.back" + n)
+        .data(d1.lines)
+        .enter()
+        .append("line")      
+        .attr("class", "line" + n)
+        .attr("x1", function(d) { return x(d.previous); })
+        .attr("x2", function(d) { return x(d.value); })
+        .attr("y1", function(d) { return y(d1.group); })
+        .attr("y2", function(d) { return y(d1.group); })      
+        .attr("transform", function(d) { return "translate(0, " + n + ")" })
+        .attr("stroke", "lightgrey")
+        .attr("stroke-width", "1px")
+        .attr("opacity", ".7")
+    })
 
     d3.select(this)
       .selectAll ("line.target")
@@ -159,7 +123,8 @@ function drawMyLine(d1) {
       .attr("y2", function(d) { return y(d1.group); })      
       .attr("transform", function(d) { return "translate(0," + (d.red ? -2 : 2) + ")" })
       .attr("stroke", function(d) { return d.red ? "red" : "grey"; })
-      .attr("stroke-width", "1px")
+      .attr("stroke-width", "2px")      
+      .attr("stroke-dasharray", "5")
   }
 
   // Lines
@@ -169,86 +134,56 @@ function drawMyLine(d1) {
     .append("g")
     .each(drawMyLine);
 
-
-
   function drawMyCircle (d1) {
-
     function onClickItems () {
       const item = d3.select(this)
-            .on("mouseover", function(d) {		
-                div.transition()		
-                    .duration(200)		
-                    .style("opacity", .9);		
+        .on("mouseover", function(d) {		
+            div.transition()		
+                .duration(200)		
+                .style("opacity", .9);		
 
-                div	.html("" + d.role  + "<br/>" + d.value)	
-                    .style("left", (d3.event.pageX) + "px")		
-                    .style("top", (d3.event.pageY - 28) + "px");	
-                })					
-            .on("mouseout", function(d) {		
-                div.transition()		
-                    .duration(500)		
-                    .style("opacity", 0);	
-            });
+            div	.html("" + d.role  + "<br/>" + d.value)	
+                .style("left", (d3.event.pageX) + "px")		
+                .style("top", (d3.event.pageY - 28) + "px");	
+            })					
+        .on("mouseout", function(d) {		
+            div.transition()		
+                .duration(500)		
+                .style("opacity", 0);	
+        });
     }
 
     function callCircle1 (di) {
       const item = d3.select(this)
-      const circle = item
-        .datum(di)
-        .append("circle")
-        .attr("class", "entity")
-        .attr("cx", function(d) { return x(d.value); })
-        .attr("cy", function(d) { return y(d1.group); })
-        .attr("r", "10")
-        .style("fill", d => d.role === "requestor" ? "#69b3a2" : "#4C4082")
-        .each(onClickItems)
-      // return circle
+      if (di.role !== "requestor") {
+        const circle = item
+          .append("circle")
+          .attr("class", "entity")
+          .attr("cx", function(d) { return x(d.value); })
+          .attr("cy", function(d) { return y(d1.group); })
+          .attr("r", "10")
+          .style("fill", "#69b3a2")
+          .each(onClickItems)
+          return circle;
+      } else {
+        const circle = item
+          .append("rect")
+          .attr("class", "entity")
+          .attr("x", function(d) { return x(d.value) - 10; })
+          .attr("y", function(d) { return y(d1.group) - 10; })
+          .attr("width", "20")
+          .attr("height", "20")
+          .style("fill", "#4C4082")
+          .each(onClickItems)
+        return circle;
+      }
     }
-
-
-    /* Not used yet. */
-    function callCircle2 (di) {
-      const item = d3.select(this)
-      const circle = item
-        .datum(di)
-        .append("circle")
-        .attr("class", "entity")
-        .attr("cx", function(d) { return x(d.value); })
-        .attr("cy", function(d) { return y(d1.group); })
-        .attr("r", "10")
-        .style("fill", d => d.role === "requestor" ? "#69b3a2" : "#4C4082")
-        .each(onClickItems)
-      // return circle
-    }
-
-
 
     d3.select(this)
       .selectAll(".entity")
       .data(d1.values)
       .enter()
       .each(callCircle1)
-      // .each(function (d) { return d.role ? callCircle1 : callCircle2 } )
-      // .append("circle")
-      // .attr("class", "entity")
-      // .attr("cx", function(d) { return x(d.value); })
-      // .attr("cy", function(d) { return y(d1.group); })
-      // .attr("r", "10")
-      // .style("fill", d => d.role === "requestor" ? "#69b3a2" : "#4C4082")
-      // .on("mouseover", function(d) {		
-      //       div.transition()		
-      //           .duration(200)		
-      //           .style("opacity", .9);		
-
-      //       div	.html("" + d.role  + "<br/>" + d.value)	
-      //           .style("left", (d3.event.pageX) + "px")		
-      //           .style("top", (d3.event.pageY - 28) + "px");	
-      //       })					
-      //   .on("mouseout", function(d) {		
-      //       div.transition()		
-      //           .duration(500)		
-      //           .style("opacity", 0);	
-      //   });
   }
 
   // Circles of variable 1
