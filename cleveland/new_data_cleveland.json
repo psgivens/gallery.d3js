@@ -1,0 +1,59 @@
+[
+    {
+        "issue": "AppSec-1234",
+        "states": [
+            {
+                "state": "requested",
+                "date": "2020-01-01",
+                "value": 1.33808
+            },
+            {
+                "state": "responded",
+                "date": "2020-01-02",
+                "value": 4.33808
+            },
+            {
+                "state": "completed",
+                "date": "2020-01-03",
+                "value": 5.14800549
+            }        
+        ],
+        "assignments": [
+            {
+                "assignee": "able",
+                "date": "2020-01-01",
+                "value": 1.53808
+            },
+            {
+                "assignee": "betty",
+                "date": "2020-01-02",
+                "value": 4.93808
+            },
+            {
+                "assignee": "charlie",
+                "date": "2020-01-03",
+                "value": 5.14800549
+            }        
+        ],
+        "comments": [
+            {
+                "commentor": "able",
+                "date": "2020-01-01",
+                "value": 1.93808,
+                "isrequestor": true
+            },
+            {
+                "commentor": "betty",
+                "date": "2020-01-02",
+                "value": 4.13808,
+                "isrequestor": false
+            },
+            {
+                "commentor": "charlie",
+                "date": "2020-01-03",
+                "value": 5.14800549,
+                "isrequestor": true
+            }        
+        ]
+    }
+]
