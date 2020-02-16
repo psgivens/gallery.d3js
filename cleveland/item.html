@@ -8,12 +8,13 @@ div.tooltip {
     position: absolute;			
     text-align: center;			
     width: 100px;					
-    height: 30px;					
+    height: 60px;					
     padding: 2px;				
     font: 12px sans-serif;		
     background: lightsteelblue;	
     border: 2px;		
     border-radius: 5px;			
+    overflow-y: scroll;
     pointer-events: none;			
 }
 </style>
@@ -35,220 +36,8 @@ const margin = {top: 10, right: 100, bottom: 30, left: 100},
 
 // Define the div for the tooltip
 const div = d3.select("body").append("div")	
-    .attr("class", "tooltip")				
+    .attr("class", "tooltip")
     .style("opacity", 0);
-
-
-// Parse the Data
-d3.json("data_cleveland.json").then(function(data) {
-
-  /******************************************
-   * Munging
-   * ****************************************/
-  let temp_value = -1;
-  const data1 = data.map(d => ({
-      group: d.item,
-      lines: d.values.reverse().map((v,i) => {
-        const p = temp_value;
-        temp_value = v.value
-        return {
-          previous: (i === d.values.length - 1) ? p : p,
-          isLine: i > 0,
-          red: v.value < 2.0 ? true : false,
-          value: v.value
-        }
-      }).filter(l => l.isLine),
-      values: d.values.reverse().map((v,i) => {
-        return {
-          role: i % 2 ? "requested" : "requestor",
-          value: v.value
-        }
-      })
-  }))
-
-
-  /******************************************
-   * Drawing 
-   * ****************************************/
-
-  const dataDomain = data1.map(function(d) { return d.group; })  
-  const dataHeight = dataDomain.length * 50
-
-  // Add X axis
-  const x = d3.scaleLinear()
-    .domain([-0.2, 6])
-    .range([ 0, width]);
-
-  // Y axis
-  const y = d3.scaleBand()
-    .domain(dataDomain)
-    .range([ 0, dataHeight ])
-    .paddingInner(0.5)
-    .paddingOuter(0.5);
-
-  const offset = (y.bandwidth() / 2)
-
-
-// append the svg object to the body of the page
-const svg = d3.select("#my_dataviz")
-  .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", dataHeight + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform",
-          "translate(" + margin.left + "," + margin.top + ")");
-
-svg.append("g")
-  .attr("transform", "translate(0," + dataHeight + ")")
-  .call(d3.axisBottom(x))
-
-svg.append("g")
-  .call(d3.axisLeft(y))
-
-
-
-  const svg1 = svg.append("g")
-    .attr("transform", "translate(0," + offset + ")")
-
-  svg.append("rect")
-    .attr("class", "sososos")
-    .attr("x", x(0))
-    .attr("width", "20")
-    .attr("y", y('AppSec-1235'))
-    .attr("height", y.bandwidth())
-    .style("fill", "lightgrey")
-    .attr("opacity", ".7")
-
-  svg.append("rect")
-    .attr("class", "sososos")
-    .attr("x", x(0))
-    .attr("width", "20")
-    .attr("y", y('AppSec-1260'))
-    .attr("height", y.bandwidth())
-    .style("fill", "lightgrey")
-    .attr("opacity", ".7")
-
-
-function drawMyLine(d1) {  
-    const selection = d3.select(this);
-    [-6, -2, 2, 6].forEach(function(n) {
-      selection
-        .selectAll ("line.back" + n)
-        .data(d1.lines)
-        .enter()
-        .append("line")      
-        .attr("class", "line" + n)
-        .attr("x1", function(d) { return x(d.previous); })
-        .attr("x2", function(d) { return x(d.value); })
-        .attr("y1", function(d) { return y(d1.group); })
-        .attr("y2", function(d) { return y(d1.group); })      
-        .attr("transform", function(d) { return "translate(0, " + n + ")" })
-        .attr("stroke", "lightgrey")
-        .attr("stroke-width", "1px")
-        .attr("opacity", ".7")
-    })
-
-    d3.select(this)
-      .selectAll ("line.target")
-      .data(d1.lines)
-      .enter()
-      .append("line")      
-      .attr("x1", function(d) { return x(d.previous); })
-      .attr("x2", function(d) { return x(d.value); })
-      .attr("y1", function(d) { return y(d1.group); })
-      .attr("y2", function(d) { return y(d1.group); })      
-      .attr("transform", function(d) { return "translate(0," + (d.red ? -2 : 2) + ")" })
-      .attr("stroke", function(d) { return d.red ? "red" : "grey"; })
-      .attr("stroke-width", "2px")      
-      .attr("stroke-dasharray", "5")
-  }
-
-  // Lines
-  svg1.selectAll("myline")
-    .data(data1)
-    .enter()
-    .append("g")
-    .each(drawMyLine);
-
-  function drawMyCircle (d1) {
-    function onClickItems () {
-      const item = d3.select(this)
-        .on("mouseover", function(d) {		
-            div.transition()		
-                .duration(200)		
-                .style("opacity", .9);		
-
-            div	.html("181: " + d.role  + "<br/>" + d.value)	
-                .style("left", (d3.event.pageX) + "px")		
-                .style("top", (d3.event.pageY - 28) + "px");	
-            })					
-        .on("mouseout", function(d) {		
-            div.transition()		
-                .duration(500)		
-                .style("opacity", 0);	
-        });
-    }
-
-    function callCircle1 (di) {
-      const item = d3.select(this)
-      if (di.role !== "requestor") {
-        const circle = item
-          .append("circle")
-          .attr("class", "entity")
-          .attr("cx", function(d) { return x(d.value); })
-          .attr("cy", function(d) { return y(d1.group); })
-          .attr("r", offset)
-          .style("fill", "#69b3a2")
-          .each(onClickItems)
-          return circle;
-      } else {
-        const rectangle = item
-          .append("rect")
-          .attr("class", "entity")
-          .attr("x", function(d) { return x(d.value) - offset; })
-          .attr("y", function(d) { return y(d1.group) - offset; })
-          .attr("width", y.bandwidth())
-          .attr("height", y.bandwidth())
-          .style("fill", "#4C4082")
-          .each(onClickItems)
-        return rectangle;
-      }
-    }
-
-    d3.select(this)
-      .selectAll(".entity")
-      .data(d1.values)
-      .enter()
-      .each(callCircle1)
-  }
-
-  // Circles of variable 1
-  svg1.selectAll("mycircle")
-    .data(data1)
-    .enter()
-    .append("g")
-    .each(drawMyCircle);
-
-})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -286,7 +75,8 @@ const data2 = data.map(d => ({
         commentor: v.commentor,
         date: v.date,
         value: v.value,
-        isrequestor: v.isrequestor
+        isrequestor: v.isrequestor,
+        comment: v.comment
       }
     }),
     assignments: d.assignments.map((v,i) => {
@@ -306,10 +96,10 @@ const data1 = data2.filter (item => item.group === 'AppSec-1234')
 
 const dataDomain = data1.map(function(d) { return d.group; })  
 const dataHeight = dataDomain.length * 30
-const assignmentHeight = 30
+const assignmentHeight = 10
 const stateHeight = 30 
-const commentHeight = 30
-const sectionPadding = 5
+const commentHeight = 10
+const sectionPadding = 8
 const contentHeight = assignmentHeight + commentHeight + stateHeight + 3*sectionPadding
 
 // Also contains "completed, but that is not drawn"
@@ -324,12 +114,22 @@ const x = d3.scaleLinear()
   .range([ 0, width]);
 
 // Y axis
-const y = d3.scaleBand()
+// Not yet created
+// const categories = [
+//   "Comments", "States", "Assignments"
+// ]
+// const category_yScale = d3.scaleBand()
+//   .domain(categories)
+//   .range([ 0, __Calculate__ ])
+//   .paddingInner(0)
+
+// Y axis
+const state_yScale = d3.scaleBand()
   .domain(stateDomains)
   .range([ 0, stateHeight ])
   .paddingInner(0)
 
-const offset = (y.bandwidth() / 2)
+const offset = (state_yScale.bandwidth() / 2)
 
 // append the svg object to the body of the page
 const svg = d3.select("#sampleviz")
@@ -340,23 +140,49 @@ const svg = d3.select("#sampleviz")
   .attr("transform",
         "translate(" + margin.left + "," + (0 + margin.top) + ")");
 
-const svg1 = svg.append("g")
-  .attr("transform", "translate(0," + (assignmentHeight + sectionPadding + margin.top) + ")")
+const g_states = svg.append("g")
+  .attr("transform", "translate(0," + (commentHeight + sectionPadding + margin.top) + ")")
 
-const svg2 = svg.append("g")
+const g_comments = svg.append("g")
   .attr("transform", "translate(0," + margin.top + ")")
 
-const svg3 = svg.append("g")
-  .attr("transform", "translate(0," + (assignmentHeight + stateHeight + 2*sectionPadding + margin.top) + ")")
+const g_assignments = svg.append("g")
+  .attr("transform", "translate(0," + (commentHeight + stateHeight + 2*sectionPadding + margin.top) + ")")
 
 
 svg.append("g")
 .attr("transform", "translate(0," + (contentHeight + margin.top) + ")")
 .call(d3.axisBottom(x))
 
-svg1.append("g")
+g_states.append("g")
 .attr("transform", "translate(" + (width ) + ",0)")
-.call(d3.axisRight(y))
+.call(d3.axisRight(state_yScale))
+
+g_comments.append("g")
+  .attr("transform", "translate(" + (width ) + ",0)")
+  .append("g")
+  .attr("width", margin.right)
+  .attr("height", commentHeight)
+  .append("text")
+  .attr("y", commentHeight /2)
+  .attr("width", margin.right)
+  .attr("height", commentHeight)
+  .attr("alignment-baseline", "central")
+  .text("Comments")  
+
+
+  g_assignments.append("g")
+  .attr("transform", "translate(" + (width ) + ",0)")
+  .append("g")
+  .attr("width", margin.right)
+  .attr("height", commentHeight)
+  .append("text")
+  .attr("y", commentHeight /2)
+  .attr("width", margin.right)
+  .attr("height", commentHeight)
+  .attr("alignment-baseline", "central")
+  .text("Assignments")  
+
 
 
 function getStateN (state) {
@@ -368,10 +194,12 @@ function getStateN (state) {
     }
 }
 
-function drawMyLine(d1) {  
+function states_drawLine(d1) {  
   const selection = d3.select(this);
   stateDomains.forEach(function(s) {
     n = getStateN(s);
+
+    // Possible states represented as shadow lines
     selection
       .selectAll ("line.back" + n)
       .data(d1.lines)
@@ -380,14 +208,15 @@ function drawMyLine(d1) {
       .attr("class", "line" + n)
       .attr("x1", function(d) { return x(d.previous); })
       .attr("x2", function(d) { return x(d.value); })
-      .attr("y1", function(d) { return y(s) + offset; })
-      .attr("y2", function(d) { return y(s) + offset; })      
+      .attr("y1", function(d) { return state_yScale(s) + offset; })
+      .attr("y2", function(d) { return state_yScale(s) + offset; })      
       .attr("transform", function(d) { return "translate(0, 0)" })
       .attr("stroke", "lightgrey")
       .attr("stroke-width", "1px")
       .attr("opacity", ".7")
   })
 
+  // Actual states represented as dark dashed line
   d3.select(this)
     .selectAll ("line.target")
     .data(d1.lines)
@@ -395,21 +224,21 @@ function drawMyLine(d1) {
     .append("line")      
     .attr("x1", function(d) { return x(d.previous); })
     .attr("x2", function(d) { return x(d.value); })
-    .attr("y1", function(d) { return y(d.state) + offset; })
-    .attr("y2", function(d) { return y(d.state) + offset; })
+    .attr("y1", function(d) { return state_yScale(d.state) + offset; })
+    .attr("y2", function(d) { return state_yScale(d.state) + offset; })
     .attr("stroke", function(d) { return d.red ? "red" : "grey"; })
     .attr("stroke-width", "2px")      
     .attr("stroke-dasharray", "5")
 }
 
-// Lines
-svg1.selectAll("myline")
+// Draw the state lines
+g_states.selectAll("stateline")
   .data(data1)
   .enter()
   .append("g")
-  .each(drawMyLine);
+  .each(states_drawLine);
 
-function drawMyStateCircle (d1) {
+function states_drawItems (d1) {
   function onClickItems () {
     const item = d3.select(this)
       .on("mouseover", function(d) {		
@@ -417,7 +246,7 @@ function drawMyStateCircle (d1) {
               .duration(200)		
               .style("opacity", .9);		
 
-          div	.html("420: " + d.role  + "<br/>" + d.value)	
+          div	.html("state: " + d.role  + "<br/>" + d.value)	
               .style("left", (d3.event.pageX) + "px")		
               .style("top", (d3.event.pageY - 28) + "px");	
           })					
@@ -428,7 +257,7 @@ function drawMyStateCircle (d1) {
       });
   }
 
-  function callCircle1 (di) {
+  function states_drawItem (di) {
     const item = d3.select(this)
       const rectangle = item
         .append("rect")
@@ -461,15 +290,15 @@ function drawMyStateCircle (d1) {
     .selectAll(".entity")
     .data(d1.values)
     .enter()
-    .each(callCircle1)
+    .each(states_drawItem)
 }
 
 // Circles of variable 1
-svg1.selectAll("mycircle")
+g_states.selectAll("mycircle")
   .data(data1)
   .enter()
   .append("g")
-  .each(drawMyStateCircle);
+  .each(states_drawItems);
 
 
 
@@ -482,7 +311,7 @@ svg1.selectAll("mycircle")
 
 
 
-function comments_drawCircle (d1) {
+function comments_drawItems (d1) {
   function onClickItems () {
     const item = d3.select(this)
       .on("mouseover", function(d) {		
@@ -490,7 +319,7 @@ function comments_drawCircle (d1) {
               .duration(200)		
               .style("opacity", .9);		
 
-          div	.html("493: " + d.role  + "<br/>" + d.value)	
+          div	.html("commentor: " + d.role  + "<br/>" + d.value + "<br/>" + d.comment)	
               .style("left", (d3.event.pageX) + "px")		
               .style("top", (d3.event.pageY - 28) + "px");	
           })					
@@ -501,7 +330,7 @@ function comments_drawCircle (d1) {
       });
   }
 
-  function comments_callCircle (di) {
+  function comments_drawItem (di) {
     const item = d3.select(this)
     if (di.role !== "requestor") {
       const circle = item
@@ -510,8 +339,8 @@ function comments_drawCircle (d1) {
         .attr("cx", function(d) { 
           return x(d.value); 
           })
-        .attr("cy", function(d) { return dataHeight / 2; })
-        .attr("r", dataHeight / 2)
+        .attr("cy", function(d) { return commentHeight / 2; })
+        .attr("r", commentHeight / 2)
         .style("fill", "#69b3a2")
         .each(onClickItems)
         return circle;
@@ -519,10 +348,10 @@ function comments_drawCircle (d1) {
       const rectangle = item
         .append("rect")
         .attr("class", "entity")
-        .attr("x", function(d) { return x(d.value) - dataHeight / 2; })
+        .attr("x", function(d) { return x(d.value) - commentHeight / 2; })
         .attr("y", function(d) { return 0; })
-        .attr("width", dataHeight)
-        .attr("height", dataHeight)
+        .attr("width", commentHeight)
+        .attr("height", commentHeight)
         .style("fill", "#4C4082")
         .each(onClickItems)
       return rectangle;
@@ -533,17 +362,17 @@ function comments_drawCircle (d1) {
     .selectAll(".entity")
     .data(d1.comments)
     .enter()
-    .each(comments_callCircle)
+    .each(comments_drawItem)
 }
 
 
 
 // Circles of variable 1
-svg2.selectAll("mycircle")
+g_comments.selectAll("mycircle")
   .data(data1)
   .enter()
   .append("g")
-  .each(drawMyCommentCircle);
+  .each(comments_drawItems);
 
 
 
@@ -560,7 +389,7 @@ svg2.selectAll("mycircle")
 
 
 
-function drawMyCommentCircle (d1) {
+function assignments_drawItems (d1) {
   function onClickItems () {
     const item = d3.select(this)
       .on("mouseover", function(d) {		
@@ -568,7 +397,7 @@ function drawMyCommentCircle (d1) {
               .duration(200)		
               .style("opacity", .9);		
 
-          div	.html("571: " + d.role  + "<br/>" + d.value)	
+          div	.html("assignee: " + d.role  + "<br/>" + d.value)	
               .style("left", (d3.event.pageX) + "px")		
               .style("top", (d3.event.pageY - 28) + "px");	
           })					
@@ -579,7 +408,7 @@ function drawMyCommentCircle (d1) {
       });
   }
 
-  function callCircle1 (di) {
+  function assignments_drawItem (di) {
     const item = d3.select(this)
     if (di.role !== "requestor") {
       const circle = item
@@ -588,8 +417,8 @@ function drawMyCommentCircle (d1) {
         .attr("cx", function(d) { 
           return x(d.value); 
           })
-        .attr("cy", function(d) { return dataHeight / 2; })
-        .attr("r", dataHeight / 2)
+        .attr("cy", function(d) { return assignmentHeight / 2; })
+        .attr("r", assignmentHeight / 2)
         .style("fill", "#69b3a2")
         .each(onClickItems)
         return circle;
@@ -597,10 +426,10 @@ function drawMyCommentCircle (d1) {
       const rectangle = item
         .append("rect")
         .attr("class", "entity")
-        .attr("x", function(d) { return x(d.value) - dataHeight / 2; })
+        .attr("x", function(d) { return x(d.value) - assignmentHeight / 2; })
         .attr("y", function(d) { return 0; })
-        .attr("width", dataHeight)
-        .attr("height", dataHeight)
+        .attr("width", assignmentHeight)
+        .attr("height", assignmentHeight)
         .style("fill", "#4C4082")
         .each(onClickItems)
       return rectangle;
@@ -609,19 +438,19 @@ function drawMyCommentCircle (d1) {
 
   d3.select(this)
     .selectAll(".entity")
-    .data(d1.comments)
+    .data(d1.assignments)
     .enter()
-    .each(callCircle1)
+    .each(assignments_drawItem)
 }
 
 
 
 // Circles of variable 1
-svg3.selectAll("mycircle")
+g_assignments.selectAll("mycircle")
   .data(data1)
   .enter()
   .append("g")
-  .each(drawMyCommentCircle);
+  .each(assignments_drawItems);
 
 
 })

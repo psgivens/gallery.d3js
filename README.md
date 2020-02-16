@@ -1,5 +1,11 @@
 # gallery.d3js
 
+To demonstrate any of the samples, change to the correct directory and launch a web server.
+
+    python -m http.server 8000
+
+Then visit http://8000 in the browser.
+
 ### activity_heatmap
 
 A heat map for my activity log. 

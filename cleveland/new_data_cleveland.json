@@ -40,19 +40,22 @@
                 "commentor": "able",
                 "date": "2020-01-01",
                 "value": 1.93808,
-                "isrequestor": true
+                "isrequestor": true,
+                "comment": "Here is a comment" 
             },
             {
                 "commentor": "betty",
                 "date": "2020-01-02",
                 "value": 4.13808,
-                "isrequestor": false
+                "isrequestor": false,
+                "comment": "Here is a comment" 
             },
             {
                 "commentor": "charlie",
                 "date": "2020-01-03",
                 "value": 5.14800549,
-                "isrequestor": true
+                "isrequestor": true,
+                "comment": "Here is a comment" 
             }        
         ]
     }
