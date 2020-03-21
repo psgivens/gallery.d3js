@@ -95,13 +95,6 @@ var x = d3.scaleBand([0, width])
 var y0 = d3.scaleLinear()
     .range([height, 0]);
 
-var xAxis = d3.axisBottom()
-    .scale(x);
-
-var yAxis = d3.axisLeft()
-    .scale(y0)
-    // .tickSize(900)//width - margin.left - margin.right)
-    .tickFormat(formatPercent);
 
 // var tip = d3.tip()
 //   .attr('class', 'd3-tip')
@@ -120,21 +113,37 @@ var svg = d3.select("body").append("svg")
 
 d3.tsv("./data.tsv", type, function(d) { return d }).then (function(data) {
 
-    for (var i = 0; i < data.length; i++) {
-        console.log(data[i].letter);
-        console.log(data[i].first);
-        console.log(data[i].second);
-        console.log(data[i].third);
+  for (var i = 0; i < data.length; i++) {
+        data[i].first = parseFloat(data[i].first);
+        data[i].second = parseFloat(data[i].second);
+        data[i].third = parseFloat(data[i].third);
     }
 
+    // for (var i = 0; i < data.length; i++) {
+    //     console.log(data[i].letter);
+    //     console.log(data[i].first);
+    //     console.log(data[i].second);
+    //     console.log(data[i].third);
+    // }
 
-  const largestFirst =  d3.max(data, d => parseFloat(d.first));
+
+  const largestFirst =  d3.max(data, d => d.first);
 
   x.domain(data.map(function(d) { return d.letter; }));
   y0.domain([
-    0, 
-    d3.max(data, function(d) { return parseFloat(d.first); }) +
-    d3.max(data, function(d) { return parseFloat(d.second) + parseFloat(d.third); })]);
+    0 - d3.max(data, function(d) { return d.first; }),     
+    d3.max(data, function(d) { return d.second + d.third; })]);
+
+    var xAxis = d3.axisBottom()
+    .scale(x);
+
+  var yAxis = d3.axisLeft()
+      .scale(y0)
+      // .tickSize(900)//width - margin.left - margin.right)
+      // .tickFormat(formatPercent);
+
+
+
 
   svg.append("g")
       .attr("class", "x axis")
@@ -165,10 +174,10 @@ d3.tsv("./data.tsv", type, function(d) { return d }).then (function(data) {
       .attr("class", "bar1")
       .attr("x", function(d) { return x(d.letter); })
       .attr("width", x.bandwidth())
-      .attr("y", function(d) { return y0(largestFirst); })
-      .attr("height", function(d) { return height - y0(d.first); })
-    //   .on('mouseover', tip.show)
-    //   .on('mouseout', tip.hide)
+      .attr("y", function(d) { return y0(0); })
+      .attr("height", function(d) { return (y0(0 - d.first) - y0(0)); })
+      // .on('mouseover', tip.show)
+      // .on('mouseout', tip.hide)
 
     svg.selectAll(".bar2")
       .data(data)
@@ -176,8 +185,8 @@ d3.tsv("./data.tsv", type, function(d) { return d }).then (function(data) {
       .attr("class", "bar2")
       .attr("x", function(d) { return x(d.letter); })
       .attr("width", x.bandwidth())
-      .attr("y", function(d) { return y0((+d.second) + largestFirst); })
-      .attr("height", function(d) { return height - y0(d.second); })
+      .attr("y", function(d) { return y0(d.second); })
+      .attr("height", function(d) { return y0(0) - y0(d.second); })
     //   .on('mouseover', tip.show)
     //   .on('mouseout', tip.hide)
 
@@ -187,14 +196,10 @@ d3.tsv("./data.tsv", type, function(d) { return d }).then (function(data) {
       .attr("class", "bar3")
       .attr("x", function(d) { return x(d.letter); })
       .attr("width", x.bandwidth())
-      .attr("y", function(d) { return y0((+d.second) + largestFirst + (+d.third)); })
-      .attr("height", function(d) { return height - y0(d.third); })
-    //   .on('mouseover', tip.show)
-    //   .on('mouseout', tip.hide)
-
-
-
-
+      .attr("y", function(d) { return y0(d.second + d.third); })
+      .attr("height", function(d) { return y0(0) - y0(d.third); })
+    // //   .on('mouseover', tip.show)
+    // //   .on('mouseout', tip.hide)
 
 
 
