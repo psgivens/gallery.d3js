@@ -34,7 +34,7 @@ var svg = d3.select("body").append("svg")
 
 // svg.call(tip);
 const showToolTip = (labelName) => { return function (d) {      
-    var xPosition = parseFloat(d3.select(this).attr("x")) + margin.left + x.bandwidth() / 2;
+    var xPosition = parseFloat(d3.select(this).attr("x")) + margin.left // + x.bandwidth() / 2;
     var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + height / 2;
 
     //Update the tooltip position and value
@@ -121,9 +121,12 @@ d3.tsv("./data.tsv", type, function(d) { return d }).then (function(data) {
       .style("text-anchor", "end")
       .text("first");
 
-  svg.selectAll(".bar1")
+  const chartContent = svg.append("g");
+
+  chartContent.selectAll(".bar1")
       .data(data)
-    .enter().append("rect")
+      .enter()
+      .append("rect")
       .attr("class", "bar1")
       .attr("x", function(d) { return x(d.date); })
       .attr("width", x.bandwidth())
@@ -132,9 +135,9 @@ d3.tsv("./data.tsv", type, function(d) { return d }).then (function(data) {
       .on('mouseover', showToolTip("first"))
       .on('mouseout', hideToolTip)
 
-    svg.selectAll(".bar2")
+  chartContent.selectAll(".bar2")
       .data(data)
-    .enter().append("rect")
+      .enter().append("rect")
       .attr("class", "bar2")
       .attr("x", function(d) { return x(d.date); })
       .attr("width", x.bandwidth())
@@ -143,9 +146,9 @@ d3.tsv("./data.tsv", type, function(d) { return d }).then (function(data) {
       .on('mouseover', showToolTip("second"))
       .on('mouseout', hideToolTip)
 
-    svg.selectAll(".bar3")
+  chartContent.selectAll(".bar3")
       .data(data)
-    .enter().append("rect")
+      .enter().append("rect")
       .attr("class", "bar3")
       .attr("x", function(d) { return x(d.date); })
       .attr("width", x.bandwidth())
